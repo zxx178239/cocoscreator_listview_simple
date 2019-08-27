@@ -41,8 +41,8 @@
     },
     "_scale": {
       "__type__": "cc.Vec3",
-      "x": 0.2932261458649031,
-      "y": 0.2932261458649031,
+      "x": 0.33075,
+      "y": 0.33075,
       "z": 1
     },
     "_quat": {
@@ -578,7 +578,7 @@
     "_enabled": true,
     "_isHasTitle": true,
     "titlePrefab": {
-      "__uuid__": "d8b439a0-2d1d-467f-ac4b-6190ea39dc7f"
+      "__uuid__": "71f8d0cf-7d39-49e0-876a-daf03d856cc7"
     },
     "subPrefab": {
       "__uuid__": "d8b439a0-2d1d-467f-ac4b-6190ea39dc7f"
@@ -588,7 +588,7 @@
     "renderEvent": {
       "__id__": 14
     },
-    "_colLineNum": 1,
+    "_colLineNum": 4,
     "_id": "d70U9KNUpGLI9j0GDYoyPh"
   },
   {
@@ -1129,7 +1129,7 @@
     "_useOriginalSize": true,
     "_string": "Enter text here...",
     "_N$string": "Enter text here...",
-    "_fontSize": 30,
+    "_fontSize": 20,
     "_lineHeight": 40,
     "_enableWrapText": false,
     "_N$file": null,

@@ -27,7 +27,7 @@ cc.Class({
         for (let n = 0; n < 999; n++) {
             this.data.push(n);
         }
-        this.listG.colLineNum = 4;
+        // this.listG.colLineNum = 3;
         this.listG.numSubItems = this.data.length;
 
         this.scheduleOnce(() => {
@@ -38,7 +38,7 @@ cc.Class({
     //网格列表渲染器
     onListGridRender(item, idx) {
         item.script.title.string = this.data[idx];
-        this.info.string = 'ListG当前渲染总数 = ' + this.listG.actualNumItems;
+        this.info.string = '当前渲染总数 = ' + this.listG.actualNumItems;
     },
     
     //当列表项被选择...
