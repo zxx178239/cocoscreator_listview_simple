@@ -20,8 +20,6 @@ const SelectedType = cc.Enum({
     'MULT': 2, //多选
 });
 
-const ListItem = require('ListItem');
-
 cc.Class({
     extends: cc.Component,
 
@@ -309,7 +307,7 @@ cc.Class({
             curId = 0;
         if (endId >= this._numSubItems)
             endId = this._numSubItems - 1;
-        cc.log(curId, endId);
+        // cc.log(curId, endId);
         for (; curId <= endId; curId++) {
             this.displayData.push(this._calcItemPos(curId));
         }
@@ -461,12 +459,8 @@ cc.Class({
             this._resetItemSize(item);
             this.content.addChild(item);
             item.setSiblingIndex(this.content.childrenCount - 1);
-            let listItem = item.getComponent(ListItem);
-            item.listItem = listItem;
-            if (listItem) {
-                listItem._list = this;
-                listItem._registerEvent();
-            }
+            
+            item.script._registerEvent();
             if (this.renderEvent) {
                 cc.Component.EventHandler.emitEvents([this.renderEvent], item, data.id);
             }
@@ -480,26 +474,11 @@ cc.Class({
         }
         this._resetItemSize(item);
 
-        this._updateListItem(item.listItem);
         if (this._lastDisplayData.indexOf(data.id) < 0) {
             this._lastDisplayData.push(data.id);
         }
     },
 
-    _updateListItem(listItem) {
-        if (!listItem)
-            return;
-        if (this.selectedMode > SelectedType.NONE) {
-            switch (this.selectedMode) {
-                case SelectedType.SINGLE:
-                    listItem.selected = this.selectedId == listItem.node._listId;
-                    break;
-                case SelectedType.MULT:
-                    listItem.selected = this.multSelected.indexOf(listItem.node._listId) >= 0;
-                    break;
-            }
-        }
-    },
 
     //仅虚拟列表用
     _resetItemSize(item) {

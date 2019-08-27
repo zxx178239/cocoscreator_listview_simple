@@ -37,7 +37,7 @@ cc.Class({
     
     //网格列表渲染器
     onListGridRender(item, idx) {
-        item.listItem.title.string = this.data[idx];
+        item.script.title.string = this.data[idx];
         this.info.string = 'ListG当前渲染总数 = ' + this.listG.actualNumItems;
     },
     
