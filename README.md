@@ -1,0 +1,2 @@
+# cocoscreator_listview_simple
+一个简化版的动态listview，仅支持grid模式排版，个人需求
