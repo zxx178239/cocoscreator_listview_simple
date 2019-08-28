@@ -816,33 +816,4 @@ cc.Class({
             }
         }
     },
-
-    // /**
-    //  * 计算当前滚动窗最近的Item
-    //  */
-    // _calcNearestItem() {
-    //     this.nearestListId = null;
-    //     let data, center;
-
-    //     this._calcViewPos();
-
-    //     let breakFor = false;
-    //     for (let n = 0; n < this.content.childrenCount && !breakFor; n += this._colLineNum) {
-    //         data = this.displayData[n];
-    //         center = (data.top + data.bottom) / 2;
-    //         if (data.top >= this.viewBottom) {
-    //             this.nearestListId = data.id;
-    //             if (this.viewBottom > center)
-    //                 this.nearestListId += this._colLineNum;
-    //             breakFor = true;
-    //         }
-    //     }
-
-    //     data = this.displayData[this.actualNumItems - 1];
-    //     if (data && data.id == this._numItems - 1) {
-    //         center = (data.top + data.bottom) / 2;
-    //         if (this.viewTop > center)
-    //             this.nearestListId = data.id;
-    //     }
-    // },
 });
