@@ -95,36 +95,36 @@ cc.Class({
             }
         },
 
-        _numTitleItems: {
+        // _numTitleItems: {
+        //     default: 0,
+        //     serializable: false,
+        // },
+
+        // numTitleItems: {
+        //     visible: false,
+        //     get() {
+        //         return this._numTitleItems;
+        //     },
+        //     set(val) {
+        //         let t = this;
+        //         if (!t.checkInited())
+        //             return;
+        //         if (val == null || val < 0) {
+        //             cc.error("num title items set error ", val);
+        //             return;
+        //         }
+        //         t._numTitleItems = val;
+        //     }
+        // },
+
+        _numItems: {
             default: 0,
             serializable: false,
         },
-
-        numTitleItems: {
+        numItems: {
             visible: false,
             get() {
-                return this._numTitleItems;
-            },
-            set(val) {
-                let t = this;
-                if (!t.checkInited())
-                    return;
-                if (val == null || val < 0) {
-                    cc.error("num title items set error ", val);
-                    return;
-                }
-                t._numTitleItems = val;
-            }
-        },
-
-        _numSubItems: {
-            default: 0,
-            serializable: false,
-        },
-        numSubItems: {
-            visible: false,
-            get() {
-                return this._numSubItems;
+                return this._numItems;
             },
             set(val) {
                 let t = this;
@@ -134,7 +134,7 @@ cc.Class({
                     cc.error('numItems set the wrong::', val);
                     return;
                 }
-                t._numSubItems = val;
+                t._numItems = val;
                 t._forceUpdate = true;
 
                 t._resizeContent();
@@ -142,7 +142,42 @@ cc.Class({
             }
         },
 
+        _elementList: {
+            default: [],
+            serializable: false,
+        },
+        elementList: {
+            visible: false,
+            get() {
+                return this._elementList;
+            },
+            set(val) {
+                let t = this;
+                if(!t.checkInited) {
+                    return;
+                }
+                if(val == null || val < 0) {
+                    cc.error("elementList set the wrong::", val);
+                    return;
+                }
+                t._elementList = val;
+                for(let i = 0; i < t._elementList.length; ++ i) {
+                    t._numItems += t._elementList[i].length;
+                }
+                t._numItems += t._elementList.length;
+                t._forceUpdate = true;
 
+                t._resizeContent();
+                t._onScrolling();
+            }
+        },
+
+        _eachListRows: [],                      // 每个模块需要的行数
+        _eachModuleTopAndBottom: [],            // 计算每一块的顶和底的区域值
+
+        _curOneDimension: 0,                    // 记录当前走到第几维，外层的维数
+        _toLastDimensionRow: 0,                 // 从第0维到当前维之前到所有元素的行数
+        _toLastDimensionLength: 0,              // 从第0维到当前维到所有元素的长度
     },
 
     onLoad() {
@@ -213,6 +248,8 @@ cc.Class({
         t._lineGap = t._layout.spacingY;        //行距
 
         t.setTemplateItem(t.subPrefab.data);
+        if(t._isHasTitle)
+            t.setTitleTemplateItem(t.titlePrefab.data);
 
         t._lastDisplayData = [];//最后一次刷新的数据
         t.displayData = [];     //当前数据
@@ -232,12 +269,18 @@ cc.Class({
     setTemplateItem(item) {
         if (!item)
             return;
-        let t = this;
-        t._itemTmp = item;
-        if (t._resizeMode == cc.Layout.ResizeMode.CHILDREN)
-            t._itemSize = t._layout.cellSize;
-        else
-            t._itemSize = new cc.size(t._itemTmp.width, t._itemTmp.height);
+        this._itemTmp = item;
+        this._itemSize = new cc.size(this._itemTmp.width, 
+                                    this._itemTmp.height);
+    },
+
+    // 记录title节点对应的宽高
+    setTitleTemplateItem(item) {
+        if(!item)
+            return;
+        this._itemTitleTmp = item;
+        this._itemTitleSize = new cc.size(this._itemTitleTmp.width,
+                                        this._itemTitleTmp.height);
     },
 
     /**
@@ -260,9 +303,9 @@ cc.Class({
     _resizeContent() {
         let t = this;
         let result;
-        let lineNum = Math.ceil(t._numSubItems / t._colLineNum);
+        let lineNum = this._getTotalLines();
         result = t.content.height = t._topGap + (t._itemSize.height * lineNum)
-            + (t._lineGap * (lineNum - 1)) + t._bottomGap;
+                                    + (t._lineGap * (lineNum - 1)) + t._bottomGap;
 
         let layout = t.content.getComponent(cc.Layout);
         if (layout)
@@ -277,6 +320,37 @@ cc.Class({
         t._lackSize = t.lackCenter ? targetWH : null;
         t._allItemSizeNoBorder = t._allItemSize - t._topGap - t._bottomGap;
         t.content.height = targetWH;
+    },
+
+    /**
+     * @description: 获取当前元素总的需要的行数，同时计算每一块需要占用的区域大小
+     * @param : 
+     * @return : 
+     */
+    _getTotalLines() {
+        let _lineNums = 0;
+        for(let i = 0; i < this._elementList.length; ++ i) {
+            this._eachListRows[i] = (1 + Math.ceil((this._elementList[i].length - 1) / this._colLineNum));
+
+            if(i === 0) {
+                this._eachModuleTopAndBottom[i] = {
+                    top: -this._topGap,
+                    bottom: - (this._itemTitleSize.height + this._lineGap 
+                                + (this._eachListRows[i] - 1) * (this._itemSize.height))
+                }
+            }else {
+                this._eachModuleTopAndBottom[i] = {
+                    top: this._eachModuleTopAndBottom[i - 1].bottom,
+                    bottom: this._eachModuleTopAndBottom[i - 1].bottom - 
+                            (this._itemTitleSize.height + this._lineGap 
+                            + (this._eachListRows[i] - 1) * (this._itemSize.height))
+                }
+            }
+
+            _lineNums += this._eachListRows[i];
+        }
+        console.log("this._eachModele: ", this._eachModuleTopAndBottom);
+        return _lineNums;
     },
 
     //滚动进行时...
@@ -297,22 +371,32 @@ cc.Class({
         this.displayData = [];
 
         let curId = 0;
-        let endId = this._numSubItems - 1;
+        let endId = this._numItems - 1;
 
         let hh = this._itemSize.height + this._lineGap;
-        curId = Math.floor((-this.viewTop - this._topGap) / hh) * this._colLineNum;
-        endId = Math.ceil((-this.viewBottom - this._bottomGap) / hh) * this._colLineNum;
+        let idRange = this._calcShowIdsByShowArea();
+        curId = idRange.startId;
+        endId = idRange.endId;
+        // curId = Math.floor((-this.viewTop - this._topGap) / hh) * this._colLineNum
+        //                     - (this._curOneDimension + 1) * (this._colLineNum - 1);
+        // endId = Math.ceil((-this.viewBottom - this._bottomGap) / hh) * this._colLineNum 
+        //                     - (this._curOneDimension + 1) * (this._colLineNum - 1);
         endId --;
         if (curId < 0)
             curId = 0;
-        if (endId >= this._numSubItems)
-            endId = this._numSubItems - 1;
-        // cc.log(curId, endId);
+        if (endId >= this._numItems)
+            endId = this._numItems - 1;
+        
+        cc.log(curId, endId);
         for (; curId <= endId; curId++) {
-            this.displayData.push(this._calcItemPos(curId));
+            let curData = this._calcItemPosById(curId);
+            if(curData) {
+                // console.log("id, curData: ", curId, curData);
+                this.displayData.push(curData);
+            }
         }
         // console.log("this.displayData: ", this.displayData);
-        if (this.displayData.length <= 0 || !this._numSubItems) { //if none, delete all.
+        if (this.displayData.length <= 0 || !this._numItems) { //if none, delete all.
             this._delRedundantItem();
             return;
         }
@@ -327,7 +411,7 @@ cc.Class({
         ) {
             this._lastDisplayData = [];
             if (this.frameByFrameRenderNum > 0) { //逐帧渲染
-                if (this._numSubItems > 0) {
+                if (this._numItems > 0) {
                     if (!this._updateDone) {
                         this._doneAfterUpdate = true;
                     } else {
@@ -347,7 +431,7 @@ cc.Class({
                 this._forceUpdate = false;
             }
         }
-        this._calcNearestItem();
+        // this._calcNearestItem();
     },
 
     //计算可视范围
@@ -358,27 +442,23 @@ cc.Class({
         this.viewBottom = this.viewTop - this.node.height;
         this.elasticBottom = this.viewBottom < -this.content.height ? Math.abs(this.viewBottom + this.content.height) : 0;
         this.viewBottom += this.elasticBottom;
-
     },
-    //计算位置 根据id
-    _calcItemPos(id) {
-        let top, bottom, itemX, itemY;
-        let colLine = Math.floor(id / this._colLineNum);
-        top = -this._topGap - ((this._itemSize.height + this._lineGap) * colLine);
-        bottom = top - this._itemSize.height;
-        itemY = bottom + (this._itemTmp.anchorY * this._itemSize.height);
 
-        itemX = this._leftGap + ((id % this._colLineNum) * (this._itemSize.width + this._columnGap))
-            + this._itemSize.width / 2;
-
-        return {
-            id: id,
-            top: top,
-            bottom: bottom,
-            x: itemX,
-            y: itemY,
-        };
-
+    /**
+     * @description: 判断当前索引是否是某一块的开头
+     * @param : 
+     * @return : 
+     */
+    _isTitleIndex(id) {
+        let headId = 0;
+        for(let i = 0; i < this._elementList.length; ++ i) {
+            if(id === headId) {
+                console.log("id true: ", id);
+                return true;
+            }
+            headId += this._elementList[i].length;
+        }
+        return false;
     },
 
     //滚动开始时..
@@ -433,7 +513,7 @@ cc.Class({
                 this._updateDone = true;
                 this._delRedundantItem();
                 this._forceUpdate = false;
-                this._calcNearestItem();
+                // this._calcNearestItem();
             }
         } else {
             this._updateCounter += this.frameByFrameRenderNum;
@@ -447,14 +527,10 @@ cc.Class({
     _createOrUpdateItem(data) {
         let item = this.getItemByListId(data.id);
         if (!item) { //如果不存在
-            if (this._subNodePool.size()) {
-                item = this._subNodePool.get();
-                // cc.log('从池中取出::   旧id =', item._listId, '，新id =', data.id, item);
-            } else {
-                item = cc.instantiate(this._itemTmp);
-                // cc.log('新建::', data.id, item);
-            }
+            item = this._getCurNode(data.isTitle);
+            console.log("id, isTitle: ", data.id, data.isTitle);
             item._listId = data.id;
+            item._isTitle = data.isTitle;
             item.setPosition(new cc.v2(data.x, data.y));
             this._resetItemSize(item);
             this.content.addChild(item);
@@ -479,47 +555,116 @@ cc.Class({
         }
     },
 
+    /**
+     * @description: 基于是否是title来决定用哪个节点来初始化
+     * @param : 
+     * @return : 
+     */
+    _getCurNode(isTitle) {
+        if(isTitle) {
+            if(this._titleNodePool.size()) {
+                return this._titleNodePool.get();
+            }else {
+                return cc.instantiate(this._itemTitleTmp);
+            }
+        }else {
+            if(this._subNodePool.size()) {
+                return this._subNodePool.get();
+            }else {
+                return cc.instantiate(this._itemTmp);
+            }
+        }
+    },
+
+    /**
+     * @description: 基于id来计算当前item的位置
+     * @param : 
+     * @return : 
+     */
+    _calcItemPosById(INId) {
+        let oldId = INId;
+        let _toLastRows = 0;
+        let _initDimension = 0;
+        let _hasUsedHeight = 0;
+        let itemX = 0, itemY = 0;
+        let isTitle = false;
+        // 1. 找到当前id对应的是第几维;
+        while(_initDimension < this._elementList.length && INId >= this._elementList[_initDimension].length) {
+            INId -= this._elementList[_initDimension].length;
+            _toLastRows += this._eachListRows[_initDimension];
+            _initDimension += 1;
+        }
+
+        if(_initDimension >= this._elementList.length) {
+            // console.log("return");
+            return;
+        }
+
+        if(_toLastRows > 0) {
+            _hasUsedHeight = (this._itemTitleSize.height + this._topGap) * _initDimension
+                            + (this._itemSize.height + this._topGap) * (_toLastRows - _initDimension);
+        }
+        if(INId === 0) {
+            itemX = this.node.width / 2 - this._itemTitleSize.width / 2;
+            itemY = -_hasUsedHeight - this._lineGap - this._itemTitleSize.height / 2; 
+            isTitle = true;
+        }else {
+            itemX = this._leftGap +  Math.floor((INId - 1) % this._colLineNum) * (this._itemSize.width + this._columnGap)
+                         + this._itemSize.width / 2;
+            itemY = -_hasUsedHeight - (this._itemTitleSize.height + this._colLineNum + 
+                        (Math.floor((INId - 1) / this._colLineNum)) * (this._itemSize.height + this._lineGap)
+                        + this._itemSize.height / 2);
+            isTitle = false;
+        }
+        return {
+            id: oldId,
+            isTitle: isTitle,
+            x: itemX,
+            y: itemY
+        };
+    },
+
+    /**
+     * @description: 基于显示区域计算当前显示的id的起点和终点
+     * @param : 
+     * @return : 
+     */
+    _calcShowIdsByShowArea() {
+        let _viewTop = this.viewTop - this._topGap;
+        let _viewBottom = this.viewBottom - this._bottomGap;
+        // console.log("_viewTop: _viewBottom: ", _viewTop, _viewBottom);
+        let _initDimension = -1;
+        let _endDimension = - 1;
+        let _startId = 0, _endId = 0;
+        for(let i = 0; i < this._elementList.length; ++ i) {
+            if(_initDimension === -1) {
+                if(i === 0 || 
+                    (this._eachModuleTopAndBottom[i].top >= _viewTop &&
+                    this._eachModuleTopAndBottom[i].bottom <= _viewTop)) {
+                    _initDimension = i;
+                }else {
+                    _startId += this._elementList[i].length;
+                    continue;
+                }
+            }
+               
+            _endId += this._elementList[i].length;
+            if(this._eachModuleTopAndBottom[i].top >= _viewBottom &&
+                this._eachModuleTopAndBottom[i].bottom < _viewBottom) {
+                break;
+            }
+        }
+
+        // console.log("_initDimension: ", _initDimension);
+        return {
+            startId: _startId,
+            endId: _endId
+        }
+    },
 
     //仅虚拟列表用
     _resetItemSize(item) {
         item.setContentSize(this._itemSize);
-    },
-
-    /**
-     * 设置多选
-     * @param {Array} args 可以是单个listId，也可是个listId数组
-     * @param {Boolean} bool 值，如果为null的话，则直接用args覆盖
-     */
-    setMultSelected(args, bool) {
-        let t = this;
-        if (!Array.isArray(args)) {
-            args = [args];
-        }
-        if (bool == null) {
-            t.multSelected = null;
-            t.multSelected = args;
-        } else {
-            let listId, sub;
-            if (bool) {
-                for (let n = args.length - 1; n >= 0; n--) {
-                    listId = args[n];
-                    sub = t.multSelected.indexOf(listId);
-                    if (sub < 0) {
-                        t.multSelected.push(listId);
-                    }
-                }
-            } else {
-                for (let n = args.length - 1; n >= 0; n--) {
-                    listId = args[n];
-                    sub = t.multSelected.indexOf(listId);
-                    if (sub >= 0) {
-                        t.multSelected.splice(sub, 1);
-                    }
-                }
-            }
-        }
-        t._forceUpdate = true;
-        t._onScrolling();
     },
 
     /**
@@ -584,13 +729,17 @@ cc.Class({
     _delRedundantItem() {
         let arr = this._getOutsideItem();
         for (let n = arr.length - 1; n >= 0; n--) {
-            this._subNodePool.put(arr[n]);
+            if(arr[n]._isTitle) {
+                this._titleNodePool.put(arr[n]);
+            }else {
+                this._subNodePool.put(arr[n]);
+            }
         }
     },
 
     /**
      * 滚动到..
-     * @param {Number} listId 索引（如果<0，则滚到首个Item位置，如果>=_numSubItems，则滚到最末Item位置）
+     * @param {Number} listId 索引（如果<0，则滚到首个Item位置，如果>=_numItems，则滚到最末Item位置）
      * @param {Number} timeInSecond 时间
      * @param {Number} offset 索引目标位置偏移，0-1
      * @param {Boolean} overStress 滚动后是否强调该Item（这只是个实验功能）
@@ -606,8 +755,8 @@ cc.Class({
             timeInSecond = 0;
         if (listId < 0)
             listId = 0;
-        else if (listId >= t._numSubItems)
-            listId = t._numSubItems - 1;
+        else if (listId >= t._numItems)
+            listId = t._numItems - 1;
         let pos = t._calcItemPos(listId); //嗯...不管virtual=true还是false，都自己算，反正结果都一样，懒得去遍历content.children了。
         let targetY;
 
@@ -654,32 +803,32 @@ cc.Class({
         }
     },
 
-    /**
-     * 计算当前滚动窗最近的Item
-     */
-    _calcNearestItem() {
-        this.nearestListId = null;
-        let data, center;
+    // /**
+    //  * 计算当前滚动窗最近的Item
+    //  */
+    // _calcNearestItem() {
+    //     this.nearestListId = null;
+    //     let data, center;
 
-        this._calcViewPos();
+    //     this._calcViewPos();
 
-        let breakFor = false;
-        for (let n = 0; n < this.content.childrenCount && !breakFor; n += this._colLineNum) {
-            data = this.displayData[n];
-            center = (data.top + data.bottom) / 2;
-            if (data.top >= this.viewBottom) {
-                this.nearestListId = data.id;
-                if (this.viewBottom > center)
-                    this.nearestListId += this._colLineNum;
-                breakFor = true;
-            }
-        }
+    //     let breakFor = false;
+    //     for (let n = 0; n < this.content.childrenCount && !breakFor; n += this._colLineNum) {
+    //         data = this.displayData[n];
+    //         center = (data.top + data.bottom) / 2;
+    //         if (data.top >= this.viewBottom) {
+    //             this.nearestListId = data.id;
+    //             if (this.viewBottom > center)
+    //                 this.nearestListId += this._colLineNum;
+    //             breakFor = true;
+    //         }
+    //     }
 
-        data = this.displayData[this.actualNumItems - 1];
-        if (data && data.id == this._numSubItems - 1) {
-            center = (data.top + data.bottom) / 2;
-            if (this.viewTop > center)
-                this.nearestListId = data.id;
-        }
-    },
+    //     data = this.displayData[this.actualNumItems - 1];
+    //     if (data && data.id == this._numItems - 1) {
+    //         center = (data.top + data.bottom) / 2;
+    //         if (this.viewTop > center)
+    //             this.nearestListId = data.id;
+    //     }
+    // },
 });

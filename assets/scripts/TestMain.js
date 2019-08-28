@@ -28,11 +28,19 @@ cc.Class({
             this.data.push(n);
         }
         // this.listG.colLineNum = 3;
-        this.listG.numSubItems = this.data.length;
+        this.listG.elementList = [
+            [0, 1, 2, 3, 
+            4, 5, 6, 7, 
+            8, 9, 10, 11],
+            [12, 13, 11, 15, 16],
+            [11, 12, 14, 16, 18],
+            [20, 21, 34, 56],
+            [2342, 2342, 234]
+        ];
 
-        this.scheduleOnce(() => {
-            this.listG.scrollTo(parseInt(this.input.string), .1);
-        }, 0.1);
+        // this.scheduleOnce(() => {
+        //     this.listG.scrollTo(parseInt(this.input.string), .1);
+        // }, 0.1);
     },
     
     //网格列表渲染器

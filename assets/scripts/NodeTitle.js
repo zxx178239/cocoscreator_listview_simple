@@ -33,10 +33,10 @@ cc.Class({
     },
 
     _registerEvent() {
-        if (this._btnCom && this._list.selectedMode > 0 && !this.eventReg) {
+        if (this._btnCom) {
             let eh = new cc.Component.EventHandler();
             eh.target = this.node;
-            eh.component = 'ListItem';
+            eh.component = 'NodeTitle';
             eh.handler = 'onClickThis';
             this._btnCom.clickEvents.unshift(eh);
             this.eventReg = true;
