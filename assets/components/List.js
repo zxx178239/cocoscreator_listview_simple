@@ -337,21 +337,21 @@ cc.Class({
             if(i === 0) {
                 this._eachModuleTopAndBottom[i] = {
                     top: -this._topGap,
-                    bottom: - (this._itemTitleSize.height + this._lineGap 
-                                + (this._eachListRows[i] - 1) * (this._itemSize.height))
+                    bottom: - (this._itemTitleSize.height 
+                                + (this._eachListRows[i] - 1) * (this._itemSize.height + this._lineGap))
                 }
             }else {
                 this._eachModuleTopAndBottom[i] = {
                     top: this._eachModuleTopAndBottom[i - 1].bottom,
                     bottom: this._eachModuleTopAndBottom[i - 1].bottom - 
                             (this._itemTitleSize.height + this._lineGap 
-                            + (this._eachListRows[i] - 1) * (this._itemSize.height))
+                            + (this._eachListRows[i] - 1) * (this._itemSize.height + this._lineGap))
                 }
             }
 
             _lineNums += this._eachListRows[i];
         }
-        console.log("this._eachModele: ", this._eachModuleTopAndBottom);
+        // console.log("this._eachModele: ", this._eachModuleTopAndBottom);
         return _lineNums;
     },
 
@@ -620,12 +620,13 @@ cc.Class({
         }
 
         if(_toLastRows > 0) {
-            _hasUsedHeight = (this._itemTitleSize.height + this._topGap) * _initDimension
-                            + (this._itemSize.height + this._topGap) * (_toLastRows - _initDimension);
+            _hasUsedHeight = (this._itemTitleSize.height) * _initDimension + this._topGap
+                            + (this._itemSize.height) * (_toLastRows - _initDimension)
+                            + this._lineGap * _toLastRows;
         }
         if(INId === 0) {
             itemX = this.node.width / 2 - this._itemTitleSize.width / 2;
-            itemY = -_hasUsedHeight - this._lineGap - this._itemTitleSize.height / 2; 
+            itemY = - _hasUsedHeight - this._itemTitleSize.height / 2; 
             isTitle = true;
         }else {
             itemX = this._leftGap +  Math.floor((INId - 1) % this._colLineNum) * (this._itemSize.width + this._columnGap)
