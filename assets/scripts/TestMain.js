@@ -23,20 +23,29 @@ cc.Class({
     },
 
     onLoad: function () {
-        this.data = [];
-        for (let n = 0; n < 999; n++) {
-            this.data.push(n);
-        }
-        // this.listG.colLineNum = 3;
-        this.listG.elementList = [
-            [0, 1, 2, 3, 
-            4, 5, 6, 7, 
-            8, 9, 10, 11],
-            [12, 13, 11, 15, 16],
-            [11, 12, 14, 16, 18],
-            [20, 21, 34, 56],
-            [2342, 2342, 234]
+        this.data = [
+            ["ABC", "A", "B", "C", "D",
+                    "E", "F", "G", "H",
+                    "I", "J", "K"],
+            ["abc", "a", "b", "c", "d",
+                    "e", "f", "g", "h"],
+            ["一", "一", "一", "丨", "丿", 
+                    "乛", "亅", "乙", "乚",
+                    "丶"],
+            ["二", "八", "勹", "匕", "十",
+                    "卜", "厂", "刀", "又",
+                    "儿", "二", "匚",  "几"],
+            ["三", "寸", "大", "飞", "干",
+                    "工", "弓", "广", "己",
+                    "口", "马", "门", "女",
+                    "山", "尸", "士", "巳",
+                    "土", "囗", "兀", "夕",
+                    "小", "幺", "弋", "尢", 
+                    "子"]
         ];
+        // this.listG.colLineNum = 3;
+
+        this.listG.elementList = this.data;
 
         // this.scheduleOnce(() => {
         //     this.listG.scrollTo(parseInt(this.input.string), .1);
@@ -45,8 +54,19 @@ cc.Class({
     
     //网格列表渲染器
     onListGridRender(item, idx) {
-        item.script.title.string = this.data[idx];
+        item.script.title.string = this.getValueById(idx);
         this.info.string = '当前渲染总数 = ' + this.listG.actualNumItems;
+    },
+
+    getValueById(INId) {
+        for(let i = 0; i < this.data.length; ++ i) {
+            if(INId > this.data[i].length - 1) {
+                INId -= this.data[i].length;
+                continue;
+            }
+            return this.data[i][INId];
+        }
+        return "";
     },
     
     //当列表项被选择...
@@ -116,9 +136,25 @@ cc.Class({
                 t.listH.numItems = t.data.length;
                 break;
             case 'btn6':
-                t.listG.scrollTo(parseInt(t.input.string), .5);
+                this.skipToValue();
                 break;
         }
     },
+
+    skipToValue() {
+        let curValue = this.input.string;
+        let totalIndex = 0;
+        for(let i = 0; i < this.data.length; ++ i) {
+            let curDimensionList = this.data[i];
+            for(let j = 1; j < curDimensionList.length; ++ j) {
+                if(curValue === curDimensionList[j]) {
+                    this.listG.scrollTo(totalIndex, .1);
+                    break;
+                }
+                totalIndex += 1;
+            }
+        }
+        
+    }
 
 });

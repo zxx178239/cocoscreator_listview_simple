@@ -389,7 +389,7 @@ cc.Class({
         
         cc.log(curId, endId);
         for (; curId <= endId; curId++) {
-            let curData = this._calcItemPosById(curId);
+            let curData = this._calcItemPosAndFilter(curId);
             if(curData) {
                 // console.log("id, curData: ", curId, curData);
                 this.displayData.push(curData);
@@ -528,7 +528,6 @@ cc.Class({
         let item = this.getItemByListId(data.id);
         if (!item) { //如果不存在
             item = this._getCurNode(data.isTitle);
-            console.log("id, isTitle: ", data.id, data.isTitle);
             item._listId = data.id;
             item._isTitle = data.isTitle;
             item.setPosition(new cc.v2(data.x, data.y));
@@ -577,6 +576,24 @@ cc.Class({
     },
 
     /**
+     * @description: 计算并过滤掉不符合区域范围掉元素
+     * @param : 
+     * @return : 
+     */
+    _calcItemPosAndFilter(INId) {
+        let curData = this._calcItemPosById(INId);
+        if(!curData) {
+            return curData;
+        }
+
+        if(curData.y >= (this.viewTop - this._topGap + this._itemSize.height) ||
+            curData.y <= (this.viewBottom - this._bottomGap - this._itemSize.height)) {
+            return null;
+        }
+        return curData;
+    },
+
+    /**
      * @description: 基于id来计算当前item的位置
      * @param : 
      * @return : 
@@ -616,6 +633,7 @@ cc.Class({
                         + this._itemSize.height / 2);
             isTitle = false;
         }
+
         return {
             id: oldId,
             isTitle: isTitle,
@@ -634,16 +652,14 @@ cc.Class({
         let _viewBottom = this.viewBottom - this._bottomGap;
         // console.log("_viewTop: _viewBottom: ", _viewTop, _viewBottom);
         let _initDimension = -1;
-        let _endDimension = - 1;
         let _startId = 0, _endId = 0;
         for(let i = 0; i < this._elementList.length; ++ i) {
             if(_initDimension === -1) {
-                if(i === 0 || 
-                    (this._eachModuleTopAndBottom[i].top >= _viewTop &&
-                    this._eachModuleTopAndBottom[i].bottom <= _viewTop)) {
+                if(this._eachModuleTopAndBottom[i].bottom <= _viewTop) {
                     _initDimension = i;
                 }else {
                     _startId += this._elementList[i].length;
+                    _endId += this._elementList[i].length;
                     continue;
                 }
             }
@@ -655,7 +671,6 @@ cc.Class({
             }
         }
 
-        // console.log("_initDimension: ", _initDimension);
         return {
             startId: _startId,
             endId: _endId
@@ -757,14 +772,11 @@ cc.Class({
             listId = 0;
         else if (listId >= t._numItems)
             listId = t._numItems - 1;
-        let pos = t._calcItemPos(listId); //嗯...不管virtual=true还是false，都自己算，反正结果都一样，懒得去遍历content.children了。
+        let pos = t._calcItemPosById(listId); //嗯...不管virtual=true还是false，都自己算，反正结果都一样，懒得去遍历content.children了。
         let targetY;
 
-        targetY = pos.top;
-        if (offset != null)
-            targetY += t.node.height * offset;
-        else
-            targetY += t._topGap;
+        targetY = pos.y + this._itemSize.height / 2 + this._lineGap;
+        
         pos = new cc.v2(0, -targetY);
 
         let viewPos = t.content.getPosition();
