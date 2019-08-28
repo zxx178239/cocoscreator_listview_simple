@@ -304,8 +304,10 @@ cc.Class({
         let t = this;
         let result;
         let lineNum = this._getTotalLines();
-        result = t.content.height = t._topGap + (t._itemSize.height * lineNum)
-                                    + (t._lineGap * (lineNum - 1)) + t._bottomGap;
+        result = t.content.height = t._topGap + (t._itemSize.height * (lineNum - this._elementList.length))
+                                    + (t._itemTitleSize.height * this._elementList.length)
+                                    + (t._lineGap * (lineNum - 1));
+                                     + t._bottomGap;
 
         let layout = t.content.getComponent(cc.Layout);
         if (layout)
@@ -387,7 +389,7 @@ cc.Class({
         if (endId >= this._numItems)
             endId = this._numItems - 1;
         
-        cc.log(curId, endId);
+        // cc.log(curId, endId);
         for (; curId <= endId; curId++) {
             let curData = this._calcItemPosAndFilter(curId);
             if(curData) {
