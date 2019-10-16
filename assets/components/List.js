@@ -530,26 +530,27 @@ cc.Class({
         let item = this.getItemByListId(data.id);
         if (!item) { //如果不存在
             item = this._getCurNode(data.isTitle);
+            // console.log("istitle, width, height: ", data.isTitle, item.width, item.height);
             item._listId = data.id;
             item._isTitle = data.isTitle;
             item.setPosition(new cc.v2(data.x, data.y));
-            this._resetItemSize(item);
+            this._resetItemSize(item, data.isTitle);
             this.content.addChild(item);
             item.setSiblingIndex(this.content.childrenCount - 1);
             
-            item.script._registerEvent();
+            item.script._registerEvent && item.script._registerEvent();
             if (this.renderEvent) {
                 cc.Component.EventHandler.emitEvents([this.renderEvent], item, data.id);
             }
         } else if (this._forceUpdate && this.renderEvent) { //强制更新
             item.setPosition(new cc.v2(data.x, data.y));
-            this._resetItemSize(item);
+            this._resetItemSize(item, data.isTitle);
             // cc.log('ADD::', data.id, item);
             if (this.renderEvent) {
                 cc.Component.EventHandler.emitEvents([this.renderEvent], item, data.id);
             }
         }
-        this._resetItemSize(item);
+        this._resetItemSize(item, data.isTitle);
 
         if (this._lastDisplayData.indexOf(data.id) < 0) {
             this._lastDisplayData.push(data.id);
@@ -588,7 +589,7 @@ cc.Class({
             return curData;
         }
 
-        if(curData.y >= (this.viewTop - this._topGap + this._itemSize.height) ||
+        if(curData.y >= (this.viewTop + this._topGap + this._itemSize.height) ||
             curData.y <= (this.viewBottom - this._bottomGap - this._itemSize.height)) {
             return null;
         }
@@ -623,9 +624,11 @@ cc.Class({
             _hasUsedHeight = (this._itemTitleSize.height) * _initDimension + this._topGap
                             + (this._itemSize.height) * (_toLastRows - _initDimension)
                             + this._lineGap * _toLastRows;
+        }else {
+            _hasUsedHeight = this._topGap;
         }
         if(INId === 0) {
-            itemX = this.node.width / 2 - this._itemTitleSize.width / 2;
+            itemX = this.node.width / 2;
             itemY = - _hasUsedHeight - this._itemTitleSize.height / 2; 
             isTitle = true;
         }else {
@@ -651,7 +654,7 @@ cc.Class({
      * @return : 
      */
     _calcShowIdsByShowArea() {
-        let _viewTop = this.viewTop - this._topGap;
+        let _viewTop = this.viewTop + this._topGap;
         let _viewBottom = this.viewBottom - this._bottomGap;
         // console.log("_viewTop: _viewBottom: ", _viewTop, _viewBottom);
         let _initDimension = -1;
@@ -681,8 +684,14 @@ cc.Class({
     },
 
     //仅虚拟列表用
-    _resetItemSize(item) {
-        item.setContentSize(this._itemSize);
+    _resetItemSize(item, isTitle) {
+        if(isTitle) {
+            // console.log("title size: ", this._itemTitleSize.width, this._itemTitleSize.height);
+            item.setContentSize(this._itemTitleSize);
+        }else {
+            item.setContentSize(this._itemSize);
+        }
+        
     },
 
     /**
