@@ -12,11 +12,11 @@
 个人需求是一个scrollView中有title和contents两个部分，不是平常的hor/ver/grid形式。
 
 基本格式为
-    title1
-sub1 sub2 sub3
-....
-    title2
-sub1 sub2 sub3
-...
+    title1. 
+sub1 sub2 sub3   
+....  
+    title2  
+sub1 sub2 sub3  
+...   
 
-以上形式，故做了一定的修改。
+以上形式，故做了一定的修改。   
